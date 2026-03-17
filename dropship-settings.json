@@ -1,0 +1,15 @@
+{
+  "local": {
+    "useOgPreview": false,
+    "useKeyword": true,
+    "defaultExpired": 4,
+    "sharingPeriod": "oneDay",
+    "keyUseQuickSending": false,
+    "keyUseAutoCopyLink": false,
+    "keyUseAutoPushMessage": false,
+    "keyLastReceiveTab": 0,
+    "keyLastSortFilter": 0,
+    "keyLastSortOrder": 0,
+    "keyLastListMode": 1
+  }
+}
