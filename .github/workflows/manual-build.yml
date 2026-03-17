@@ -7,20 +7,36 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: ${{ matrix.artifact_name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: dropship-cmd-linux-x86_64
-            binary_name: dropship-cmd
-          - os: windows-latest
-            artifact_name: dropship-cmd-windows-x86_64
-            binary_name: dropship-cmd.exe
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Prepare artifact bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/dropship-cmd-linux-x86_64
+          cp target/release/dropship-cmd dist/dropship-cmd-linux-x86_64/dropship-cmd
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dropship-cmd-linux-x86_64
+          path: dist/dropship-cmd-linux-x86_64/dropship-cmd
+          if-no-files-found: error
+
+  build-windows:
+    name: Windows
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,22 +50,13 @@ jobs:
       - name: Prepare artifact bundle
         shell: pwsh
         run: |
-          $repoRoot = $env:GITHUB_WORKSPACE
-          $bundleDir = Join-Path $repoRoot ("dist/" + "${{ matrix.artifact_name }}")
+          $bundleDir = "dist/dropship-cmd-windows-x86_64"
           New-Item -ItemType Directory -Path $bundleDir -Force | Out-Null
-
-          $binaryPath = Join-Path $repoRoot ("target/release/" + "${{ matrix.binary_name }}")
-          Copy-Item -Path $binaryPath -Destination (Join-Path $bundleDir "${{ matrix.binary_name }}") -Force
-          Copy-Item -Path (Join-Path $repoRoot "README.md") -Destination (Join-Path $bundleDir "README.md") -Force
-          Copy-Item -Path (Join-Path $repoRoot "COMMANDS.md") -Destination (Join-Path $bundleDir "COMMANDS.md") -Force
-
-          if ("${{ matrix.os }}" -eq "windows-latest") {
-            Copy-Item -Path (Join-Path $repoRoot "icon.ico") -Destination (Join-Path $bundleDir "icon.ico") -Force
-          }
+          Copy-Item -Path "target/release/dropship-cmd.exe" -Destination "$bundleDir/dropship-cmd.exe" -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
-          path: dist/${{ matrix.artifact_name }}
+          name: dropship-cmd-windows-x86_64
+          path: dist/dropship-cmd-windows-x86_64/dropship-cmd.exe
           if-no-files-found: error
